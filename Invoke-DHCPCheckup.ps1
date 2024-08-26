@@ -178,6 +178,69 @@ function Check-DhcpNameProtectionSettings
     }
 }
 
+function Check-DhcpDynamicNameUpdateSettings
+{
+    param(
+    [parameter(Mandatory=$True)][String[]]$ActiveDhcpServers
+    )
+
+    foreach ($server in $ActiveDhcpServers)
+    {
+        $printed = $False
+        $serverDisplayName = $server.ToUpper()
+
+        # IPv4 settings
+
+        $serverV4DnsSettings = Get-DhcpServerv4DnsSetting -ComputerName $server
+
+        if ($serverV4DnsSettings.DynamicUpdates -ne "Never")
+        {
+            Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($serverV4DnsSettings.DynamicUpdates)) on the server level for IPv4. This means that new scopes would be created with DNS Dynamic Updates enabled too."
+            $printed = $True
+        }
+
+        $serverV4Scopes = Get-DhcpServerv4Scope -ComputerName $server
+
+        foreach ($scopeID in $serverV4Scopes)
+        {
+            $scopeV4DnsSettings = Get-DhcpServerv4DnsSetting -ComputerName $server -ScopeId $scopeID.ScopeId.IPAddressToString
+            if ($scopeV4DnsSettings.DynamicUpdates -ne "Never")
+            {
+                Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($scopeV4DnsSettings.DynamicUpdates)) for the IPv4 scope: $($scopeID.Name) - $($scopeID.ScopeId.IPAddressToString)"
+                $printed = $True
+            }
+        }
+
+        # IPv6 settings
+
+        $serverV6DnsSettings = Get-DhcpServerv6DnsSetting -ComputerName $server
+
+        if ($serverV6DnsSettings.DynamicUpdates -ne "Never")
+        {
+            Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($serverV6DnsSettings.DynamicUpdates)) on the server level for IPv6. This means that new scopes would be created with DNS Dynamic Updates enabled too."
+            $printed = $True
+        }
+
+        $serverV6Scopes = Get-DhcpServerv6Scope -ComputerName $server
+
+        foreach ($scopeID in $serverV6Scopes)
+        {
+            $scopeV6DnsSettings = Get-DhcpServerv6DnsSetting -ComputerName $server -ScopeId $scopeID.ScopeId.IPAddressToString
+            if ($scopeV6DnsSettings.DynamicUpdates -ne "Never")
+            {
+                Write-Host "[*] $($serverDisplayName) - DNS Dynamic Updates are enabled (Value: $($scopeV6DnsSettings.DynamicUpdates)) for the IPv6 scope: $($scopeID.Name) - $($scopeID.ScopeId.IPAddressToString)"
+                $printed = $True
+            }
+        }
+
+
+        if ($printed)
+        {
+            Write-Host ""
+        }
+    }
+}
+
 function Check-DnsUpdateProxyMembership
 {
     $allDhcpServers = Get-DhcpServerInDC
@@ -364,6 +427,11 @@ By Ori David of Akamai SIG
     $DhcpCredentials = Check-DnsCredentialSettings -ActiveDhcpServers $ActiveDhcpServers -strongGroupsMembers $strongGroupMembers
 
 
+    Write-Host "`n-----------------------------------------`nChecking DHCP DNS Dynamic Update Settings`n-----------------------------------------`n"
+
+    Check-DhcpDynamicNameUpdateSettings -ActiveDhcpServers $ActiveDhcpServers
+    
+    
     Write-Host "`n-----------------------------------------`nChecking DHCP Name Protection Settings`n-----------------------------------------`n"
 
     Check-DhcpNameProtectionSettings -ActiveDhcpServers $ActiveDhcpServers
