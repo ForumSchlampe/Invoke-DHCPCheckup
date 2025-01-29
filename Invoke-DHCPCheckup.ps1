@@ -44,7 +44,7 @@ function GetStrongUsers
 {
     $DomainSID = (Get-ADDomain).DomainSID.ToString()
     $strongGroupsDomainControllers = $DomainSID + "-516"
-    $strongGroupsDomainAdmins = $DomainSID + "-516"
+    $strongGroupsDomainAdmins = $DomainSID + "-512"
     $strongGroupsEnterpriseAdmins = $DomainSID + "-519"
     $strongGroupsDNSAdmins = (get-adgroup dnsadmins).sid.ToString()
     $strongGroupsAdministrators = "S-1-5-32-544"
